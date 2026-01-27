@@ -2,71 +2,70 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>鳴潮 音骸厳選ツール</title>
     <style>
-        :root { --primary: #ff4b4b; --bg: #f0f2f6; --card-bg: #ffffff; --text: #31333f; }
+        :root { --primary: #ff4b4b; --bg: #f0f2f6; --card-bg: #ffffff; --text: #31333f; --border: #e0e0e0; }
         body { font-family: "Source Sans Pro", sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        h1, h2, h3 { color: var(--text); }
-        .container { max-width: 1000px; margin: 0 auto; }
+        h1, h2, h3, h4 { margin-top: 0; color: var(--text); }
+        .container { max-width: 1100px; margin: 0 auto; }
         
-        /* タブ */
-        .tabs { display: flex; border-bottom: 1px solid #ccc; margin-bottom: 20px; }
-        .tab { padding: 10px 20px; cursor: pointer; border-bottom: 2px solid transparent; font-weight: bold; }
-        .tab.active { border-bottom: 2px solid var(--primary); color: var(--primary); }
-        .tab-content { display: none; }
+        /* タブナビゲーション */
+        .tabs { display: flex; overflow-x: auto; border-bottom: 1px solid #ccc; margin-bottom: 20px; gap: 5px; }
+        .tab { padding: 10px 15px; cursor: pointer; border-bottom: 3px solid transparent; font-weight: bold; white-space: nowrap; }
+        .tab.active { border-bottom: 3px solid var(--primary); color: var(--primary); }
+        .tab-content { display: none; animation: fadeIn 0.3s; }
         .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* カード・レイアウト */
+        /* カードデザイン */
         .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
 
-        /* フォーム要素 */
+        /* フォーム */
         label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; }
-        input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         input[type="range"] { width: 100%; }
-        button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; }
-        button:hover { opacity: 0.9; }
-        
+        button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.2s; }
+        button:hover { opacity: 0.85; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
         /* テーブル */
-        table { width: 100%; border-collapse: collapse; font-size: 0.9em; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin-top: 10px; }
         th, td { padding: 8px; text-align: right; border-bottom: 1px solid #eee; }
-        th { text-align: center; background: #f8f9fa; }
+        th { text-align: center; background: #f8f9fa; position: sticky; top: 0; }
         .zero-val { color: #d0d0d0; }
 
-        /* スライダーコンテナ */
-        .slider-group { margin-bottom: 15px; }
-        .val-disp { float: right; font-weight: bold; color: var(--primary); }
-
-        /* メッセージ */
-        .msg { padding: 10px; border-radius: 4px; margin-top: 10px; font-weight: bold; text-align: center; }
+        /* その他 */
+        .msg { padding: 15px; border-radius: 4px; margin-top: 10px; font-weight: bold; text-align: center; }
         .msg.success { background: #d4edda; color: #155724; }
         .msg.warning { background: #fff3cd; color: #856404; }
         .msg.error { background: #f8d7da; color: #721c24; }
+        
+        .stat-group { margin-bottom: 10px; }
+        .stat-label { font-size: 0.85em; color: #666; }
+        
+        details { border: 1px solid var(--border); border-radius: 4px; margin-bottom: 10px; }
+        summary { background: #f8f9fa; padding: 10px; cursor: pointer; font-weight: bold; }
+        .details-content { padding: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🔊 鳴潮 音骸厳選ツール (FastAPI版)</h1>
+    <h1>🔊 鳴潮 音骸厳選ツール (Client)</h1>
 
     <div class="card">
-        <h3>⚙️ キャラクター設定</h3>
-        <div class="grid-3">
+        <h3>⚙️ キャラクター・プリセット設定</h3>
+        <div class="grid-2">
             <div>
-                <label>キャラプリセット</label>
-                <select id="charSelect" onchange="updatePreset()">
-                    <option value="custom">カスタム</option>
-                    <option value="jinshi">今汐 (スキル特化)</option>
-                    <option value="jiyan">忌炎 (重撃特化)</option>
-                    <option value="changli">長離 (スキル/解放)</option>
-                    <option value="xiangli">相里要 (解放特化)</option>
-                    <option value="tsubaki">ツバキ (通常特化)</option>
-                    <option value="verina">ヴェリーナ (ヒーラー)</option>
-                </select>
+                <label>キャラクター選択</label>
+                <select id="charSelect" onchange="updatePreset()"></select>
             </div>
-            <div style="grid-column: span 2; display: flex; align-items: center; font-size: 0.8em; color: #666;">
-                ※係数はプリセットに応じて自動設定されます（APIに送信されます）
+            <div>
+                <label>現在の有効ステータス（自動設定）</label>
+                <div id="activeStatsDisplay" style="font-size: 0.85em; color: #555; line-height: 1.4;"></div>
             </div>
         </div>
     </div>
@@ -83,22 +82,27 @@
         <div class="grid-2">
             <div class="card">
                 <h3>目標スコア算出</h3>
-                <label>使用可能チュナ上限: <input type="number" id="t1_limit" value="500"></label>
-                <button onclick="calcTarget()">計算する</button>
-                <div id="t1_res_calc" class="msg" style="display:none;"></div>
+                <p style="font-size:0.9em; color:#666;">許容できるコストから目標スコアを逆算します。</p>
+                <label>使用可能チュナ上限: <input type="number" id="t1_limit" value="500" step="100"></label>
+                <button onclick="calcTarget()">目標スコアを計算</button>
             </div>
             <div class="card">
                 <h3>必要素材計算</h3>
-                <label>目標スコア入力: <input type="number" id="t1_score" value="25"></label>
+                <p style="font-size:0.9em; color:#666;">スコアを指定してコストを計算します。</p>
+                <label>目標スコア: <input type="number" id="t1_score" value="25"></label>
                 <button onclick="calcResources()">素材消費量を計算</button>
             </div>
         </div>
-        <div class="card" id="t1_resources" style="display:none;">
-            <h3>📊 想定消費リソース</h3>
-            <div class="grid-3" style="text-align: center;">
-                <div><h4>チュナ</h4><span id="res_tuner" style="font-size: 1.5em; font-weight: bold;"></span></div>
-                <div><h4>レコード</h4><span id="res_record" style="font-size: 1.5em; font-weight: bold;"></span></div>
-                <div><h4>音骸素体</h4><span id="res_body" style="font-size: 1.5em; font-weight: bold;"></span></div>
+        
+        <div id="t1_result_area" style="display:none;">
+            <div class="msg success" id="t1_msg"></div>
+            <div class="card">
+                <h3>📊 素材消費量（期待値）</h3>
+                <div class="grid-3" style="text-align: center;">
+                    <div><h4>チュナ</h4><span id="res_tuner" style="font-size: 1.5em; font-weight: bold;">-</span></div>
+                    <div><h4>レコード (金)</h4><span id="res_record" style="font-size: 1.5em; font-weight: bold;">-</span></div>
+                    <div><h4>音骸素体</h4><span id="res_body" style="font-size: 1.5em; font-weight: bold;">-</span></div>
+                </div>
             </div>
         </div>
     </div>
@@ -106,18 +110,20 @@
     <div id="tab2" class="tab-content">
         <div class="grid-2">
             <div class="card">
-                <h3>現在のステータス</h3>
-                <label>現在の強化回数 (0-4): <input type="range" id="t2_times" min="0" max="4" value="1" oninput="document.getElementById('t2_times_val').innerText=this.value"></label>
-                <div style="text-align:right; margin-bottom:10px;">回数: <span id="t2_times_val">1</span></div>
+                <h3>現在のステータス入力</h3>
+                <label>現在の強化回数: <span id="t2_times_val" style="font-weight:bold; color:var(--primary);">1</span>
+                    <input type="range" id="t2_times" min="0" max="4" value="1" oninput="document.getElementById('t2_times_val').innerText=this.value">
+                </label>
+                <hr>
                 <div id="t2_sliders"></div> </div>
             <div class="card">
                 <h3>判定結果</h3>
-                <div style="font-size: 1.2em; text-align: center; margin-bottom: 20px;">
-                    現在スコア: <span id="t2_score" style="font-weight: bold; color: var(--primary);">0.0</span>
+                <div style="text-align:center; margin-bottom:20px;">
+                    現在のスコア: <span id="t2_current_score" style="font-size:1.5em; font-weight:bold;">0.00</span>
                 </div>
                 <button onclick="judgeContinue()">判定実行</button>
-                <div id="t2_result" class="msg" style="display:none;"></div>
-                <div id="t2_detail" style="margin-top:10px; font-size: 0.9em;"></div>
+                <div id="t2_result_msg" class="msg" style="display:none;"></div>
+                <div id="t2_detail" style="margin-top:15px; font-size:0.95em; line-height:1.5;"></div>
             </div>
         </div>
     </div>
@@ -125,14 +131,21 @@
     <div id="tab3" class="tab-content">
         <div class="card">
             <h3>続行可能最小ライン一覧</h3>
-            <label>検索する強化回数: 
-                <select id="t3_times" style="width: auto;">
-                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
-                </select>
-            </label>
-            <button onclick="calcLines()">一覧を生成</button>
-            <div id="t3_loading" style="display:none; text-align:center; padding:20px;">計算中...</div>
-            <div style="margin-top: 20px; overflow-x: auto;">
+            <div class="grid-2" style="align-items: end;">
+                <label>検索する強化回数
+                    <select id="t3_times">
+                        <option value="1">1回目</option>
+                        <option value="2">2回目</option>
+                        <option value="3">3回目</option>
+                        <option value="4">4回目</option>
+                    </select>
+                </label>
+                <button onclick="calcLines()">一覧を生成</button>
+            </div>
+            <div id="t3_loading" style="display:none; text-align:center; padding:20px; color:#666;">
+                ⏳ 計算中... (少し時間がかかります)
+            </div>
+            <div style="margin-top:20px; overflow-x:auto;">
                 <table id="t3_table"></table>
             </div>
         </div>
@@ -140,23 +153,23 @@
 
     <div id="tab4" class="tab-content">
         <div class="card">
-            <h3>サブステータス入力</h3>
-            <div id="t4_sliders" class="grid-3"></div> <hr style="margin: 20px 0; border: 0; border-top: 1px solid #eee;">
-            <div style="text-align: center;">
+            <h3>単体スコア計算</h3>
+            <div id="t4_sliders" class="grid-3"></div> <hr>
+            <div style="text-align:center;">
                 <h2>合計スコア: <span id="t4_score">0.00</span></h2>
             </div>
-            <button onclick="downloadCSV()">CSVダウンロード</button>
+            <button onclick="downloadCSV()">CSVでダウンロード</button>
         </div>
     </div>
 
     <div id="tab5" class="tab-content">
         <div class="card">
-            <h3>5連音骸入力</h3>
+            <h3>5連音骸管理</h3>
             <div id="t5_container"></div> <button onclick="calcEcho5()">集計する</button>
         </div>
         <div class="card">
             <h3>集計結果</h3>
-            <div style="overflow-x: auto;">
+            <div style="overflow-x:auto;">
                 <table id="t5_table"></table>
             </div>
         </div>
@@ -165,37 +178,70 @@
 </div>
 
 <script>
-    // --- 定数データ (Python側と同じもの) ---
+    // --- 定数定義 (バックエンドと一致させる) ---
+    // バックエンドのURL (適宜変更してください。ローカルなら http://localhost:8000)
+    const API_BASE = "http://localhost:8000";
+
+    // 数値リスト (Pythonコードから転記)
     const SUBST_DATA = {
-        "クリティカル": [6.3, 6.9, 7.5, 8.1, 8.7, 9.3, 9.9, 10.5],
-        "クリダメ": [12.6, 13.8, 15.0, 16.2, 17.4, 18.6, 19.8, 21.0],
-        "攻撃力％": [6.4, 7.1, 7.9, 8.6, 9.4, 10.1, 10.9, 11.6],
-        "共鳴効率": [6.8, 7.6, 8.4, 9.2, 10.0, 10.8, 11.6, 12.4],
-        "攻撃実数": [30, 40, 50, 60],
-        "ダメUP": [6.4, 7.1, 7.9, 8.6, 9.4, 10.1, 10.9, 11.6]
+        "cr": [6.3, 6.9, 7.5, 8.1, 8.7, 9.3, 9.9, 10.5],
+        "cd": [12.6, 13.8, 15.0, 16.2, 17.4, 18.6, 19.8, 21.0],
+        "atk_p": [6.4, 7.1, 7.9, 8.6, 9.4, 10.1, 10.9, 11.6],
+        "dam": [6.4, 7.1, 7.9, 8.6, 9.4, 10.1, 10.9, 11.6], // ダメUP系共通
+        "er": [6.8, 7.6, 8.4, 9.2, 10.0, 10.8, 11.6, 12.4],
+        "atk_n": [30, 40, 50, 60]
     };
 
+    // キャラプリセット (Pythonコードから転記)
     const PRESETS = {
-        "custom": { coe: [2.0, 1.0, 1.0, 0.0, 0.0, 0.0, 0.1], d1: "ダメ1", d2: "ダメ2" },
-        "jinshi": { coe: [2.0, 1.0, 0.8, 1.0, 0.0, 0.2, 0.05], d1: "スキル", d2: "その他" },
-        "jiyan": { coe: [2.0, 1.0, 0.8, 1.0, 0.0, 0.2, 0.05], d1: "重撃", d2: "解放" },
-        "changli": { coe: [2.0, 1.0, 0.8, 1.0, 1.0, 0.2, 0.05], d1: "スキル", d2: "解放" },
-        "xiangli": { coe: [2.0, 1.0, 0.8, 1.0, 0.0, 0.2, 0.05], d1: "解放", d2: "スキル" },
-        "tsubaki": { coe: [2.0, 1.0, 0.8, 1.0, 0.0, 0.1, 0.05], d1: "通常", d2: "スキル" },
-        "verina": { coe: [0.0, 0.0, 1.0, 0.0, 0.0, 2.0, 0.1], d1: "回復", d2: "不要" }
+        "カスタム (手動設定)": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "ダメアップ1", "d2": "ダメアップ2"},
+        "リンネー": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "千咲": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "仇遠": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "ガルブレーナ": {"coe": [2.0, 1.0, 1.0, 0.3, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "ユーノ": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "オーガスタ": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "フローヴァ": {"coe": [2.0, 1.0, 1.0, 0.5, 0.0, 0.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
+        "ルパ": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "シャコンヌ": {"coe": [2.0, 1.0, 1.0, 0.3, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "ザンニー": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "カンタレラ": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "ブラント": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "フィービー": {"coe": [2.0, 1.0, 1.0, 0.4, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "ロココ": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "カルロッタ": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
+        "ツバキ": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "折枝": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "相里要": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "長離": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
+        "今汐": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 0.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
+        "吟霖": {"coe": [2.0, 1.0, 1.0, 0.5, 0.0, 1.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
+        "忌炎": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "気道主人公": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
+        "消滅主人公": {"coe": [2.0, 1.0, 1.0, 0.3, 0.3, 1.0, 0.1], "d1": "通常ダメ", "d2": "解放ダメ"},
+        "回折主人公": {"coe": [2.0, 1.0, 1.0, 0.4, 0.3, 1.0, 0.1], "d1": "スキルダメ", "d2": "解放ダメ"},
+        "アンコ": {"coe": [2.0, 1.0, 1.0, 0.5, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "カカロ": {"coe": [2.0, 1.0, 1.0, 0.5, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "凌陽": {"coe": [2.0, 1.0, 1.0, 0.3, 0.3, 1.0, 0.1], "d1": "通常ダメ", "d2": "スキルダメ"},
+        "灯灯": {"coe": [2.0, 1.0, 1.0, 0.4, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "アールト": {"coe": [2.0, 1.0, 1.0, 0.4, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
+        "熾霞": {"coe": [2.0, 1.0, 1.0, 0.5, 0.3, 1.0, 0.1], "d1": "スキルダメ", "d2": "解放ダメ"},
+        "モルトフィー": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
+        "丹瑾": {"coe": [2.0, 1.0, 1.0, 0.4, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
+        "散華": {"coe": [2.0, 1.0, 1.0, 0.3, 0.3, 1.0, 0.1], "d1": "解放ダメ", "d2": "スキルダメ"}
     };
 
     // グローバル状態
-    let currentState = {
+    let state = {
         target_score: 25,
-        ave_chuna: 100,
-        preset: PRESETS["custom"]
+        ave_chuna: 100.0,
+        preset: PRESETS["カスタム (手動設定)"]
     };
 
     // --- 初期化 ---
-    window.onload = () => {
-        updatePreset();
-        renderSliders();
+    window.onload = function() {
+        initCharSelect();
+        updatePreset(); // 初期描画
     };
 
     function switchTab(n) {
@@ -205,126 +251,163 @@
         document.getElementById(`tab${n}`).classList.add('active');
     }
 
+    function initCharSelect() {
+        const sel = document.getElementById('charSelect');
+        Object.keys(PRESETS).forEach(name => {
+            const opt = document.createElement('option');
+            opt.value = name;
+            opt.innerText = name;
+            sel.appendChild(opt);
+        });
+    }
+
     function updatePreset() {
-        const key = document.getElementById('charSelect').value;
-        currentState.preset = PRESETS[key];
-        renderSliders();
+        const name = document.getElementById('charSelect').value;
+        state.preset = PRESETS[name];
+        
+        // 有効ステータス表示更新
+        const labels = getLabels();
+        const active = labels.filter((l, i) => state.preset.coe[i] > 0);
+        document.getElementById('activeStatsDisplay').innerText = active.join(" / ");
+        
+        renderAllSliders();
     }
 
     function getLabels() {
-        const p = currentState.preset;
+        const p = state.preset;
         return ["クリティカル", "クリダメ", "攻撃力％", p.d1, p.d2, "共鳴効率", "攻撃実数"];
     }
 
-    // スライダー生成ヘルパー
-    function createSliderHTML(id_prefix, idx, label, values) {
-        // datalist用のID
-        const listId = `${id_prefix}_list_${idx}`;
-        let options = values.map(v => `<option value="${v}"></option>`).join('');
-        
-        // input type=range は不連続な値をとれないので、step操作ではなく
-        // 配列インデックスで管理するか、簡易的に select を使うのが安全
-        // ここではUIの再現性を重視して select にします
-        let selectOpts = `<option value="0">未取得</option>` + 
-                         values.map(v => `<option value="${v}">${v}</option>`).join('');
-
-        return `
-            <div class="slider-group">
-                <label>${label}</label>
-                <select id="${id_prefix}_${idx}" onchange="calcLocalScore('${id_prefix}')">
-                    ${selectOpts}
-                </select>
-            </div>`;
+    function getValuesList(index) {
+        // インデックスとSUBST_DATAの対応
+        // 0:cr, 1:cd, 2:atk_p, 3:dam, 4:dam, 5:er, 6:atk_n
+        const map = [
+            SUBST_DATA.cr, SUBST_DATA.cd, SUBST_DATA.atk_p, 
+            SUBST_DATA.dam, SUBST_DATA.dam, SUBST_DATA.er, 
+            SUBST_DATA.atk_n
+        ];
+        return map[index];
     }
 
-    function renderSliders() {
+    // スライダー(Select)生成用の共通関数
+    function createSelectHTML(id, label, values) {
+        let opts = `<option value="0">未取得</option>`;
+        values.forEach(v => {
+            opts += `<option value="${v}">${v}</option>`;
+        });
+        return `
+            <div class="stat-group">
+                <label class="stat-label">${label}</label>
+                <select id="${id}" onchange="recalcLocalScore()">${opts}</select>
+            </div>
+        `;
+    }
+
+    function renderAllSliders() {
         const labels = getLabels();
-        const lists = [
-            SUBST_DATA["クリティカル"], SUBST_DATA["クリダメ"], SUBST_DATA["攻撃力％"],
-            SUBST_DATA["ダメUP"], SUBST_DATA["ダメUP"], SUBST_DATA["共鳴効率"], SUBST_DATA["攻撃実数"]
-        ];
-        const coe = currentState.preset.coe;
+        const coe = state.preset.coe;
 
-        // Tab2
-        let t2_html = '<div class="grid-3">';
+        // Tab 2 & Tab 4 用 (有効なものだけ)
+        let t2_html = "", t4_html = "";
         labels.forEach((lbl, i) => {
-            if (coe[i] > 0) t2_html += createSliderHTML('t2_sub', i, lbl, lists[i]);
+            if (coe[i] > 0) {
+                const vals = getValuesList(i);
+                t2_html += createSelectHTML(`t2_sub_${i}`, lbl, vals);
+                t4_html += createSelectHTML(`t4_sub_${i}`, lbl, vals);
+            }
         });
-        document.getElementById('t2_sliders').innerHTML = t2_html + '</div>';
-
-        // Tab4
-        let t4_html = '';
-        labels.forEach((lbl, i) => {
-            if (coe[i] > 0) t4_html += createSliderHTML('t4_sub', i, lbl, lists[i]);
-        });
+        document.getElementById('t2_sliders').innerHTML = `<div class="grid-3">${t2_html}</div>`;
         document.getElementById('t4_sliders').innerHTML = t4_html;
 
-        // Tab5 (5個分)
-        let t5_html = '';
+        // Tab 5 用 (5個分)
         const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
-        echoes.forEach((name, eIdx) => {
-            t5_html += `<details><summary style="cursor:pointer; font-weight:bold; padding:10px; background:#f8f9fa; margin-bottom:5px;">${name}</summary><div class="grid-3" style="padding:10px;">`;
+        let t5_html = "";
+        echoes.forEach((eName, eIdx) => {
+            let content = "";
             labels.forEach((lbl, i) => {
-                if (coe[i] > 0) t5_html += createSliderHTML(`t5_${eIdx}_sub`, i, lbl, lists[i]);
+                if (coe[i] > 0) {
+                    content += createSelectHTML(`t5_${eIdx}_${i}`, lbl, getValuesList(i));
+                }
             });
-            t5_html += `</div></details>`;
+            t5_html += `
+                <details>
+                    <summary>${eName}</summary>
+                    <div class="details-content grid-3">${content}</div>
+                </details>
+            `;
         });
         document.getElementById('t5_container').innerHTML = t5_html;
     }
 
-    // クライアント側での簡易スコア計算（表示用）
-    function calcLocalScore(prefix) {
-        const coe = currentState.preset.coe;
-        let score = 0;
-        for (let i = 0; i < 7; i++) {
-            if (coe[i] > 0) {
-                const el = document.getElementById(`${prefix}_${i}`);
-                if (el) score += parseFloat(el.value) * coe[i];
+    function recalcLocalScore() {
+        // Tab 2 と Tab 4 のスコア表示を更新
+        const coe = state.preset.coe;
+        let s2 = 0, s4 = 0;
+        for(let i=0; i<7; i++) {
+            if(coe[i]>0) {
+                const el2 = document.getElementById(`t2_sub_${i}`);
+                if(el2) s2 += parseFloat(el2.value) * coe[i];
+                
+                const el4 = document.getElementById(`t4_sub_${i}`);
+                if(el4) s4 += parseFloat(el4.value) * coe[i];
             }
         }
-        if (prefix === 't2_sub') document.getElementById('t2_score').innerText = score.toFixed(2);
-        if (prefix === 't4_sub') document.getElementById('t4_score').innerText = score.toFixed(2);
+        document.getElementById('t2_current_score').innerText = s2.toFixed(2);
+        document.getElementById('t4_score').innerText = s4.toFixed(2);
     }
 
-    // --- API連携 ---
-    const API_BASE = "http://localhost:8000"; // 本番時は変更
+    // --- API連携関数 ---
 
+    // Tab 1: 目標計算
     async function calcTarget() {
         const limit = document.getElementById('t1_limit').value;
-        const msg = document.getElementById('t1_res_calc');
-        msg.style.display = 'block'; msg.className = 'msg'; msg.innerText = '計算中...';
-
         try {
             const res = await fetch(`${API_BASE}/api/calc_target`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ chuna_limit: parseFloat(limit), coe: currentState.preset.coe })
+                body: JSON.stringify({ chuna_limit: parseFloat(limit), coe: state.preset.coe })
             });
             const data = await res.json();
-            currentState.target_score = data.target_score;
-            currentState.ave_chuna = data.ave_chuna;
             
-            // 入力欄に反映
+            // 状態更新
+            state.target_score = data.target_score;
+            state.ave_chuna = data.ave_chuna;
+            
+            // UI更新
             document.getElementById('t1_score').value = data.target_score;
-            
-            msg.className = 'msg success';
-            msg.innerText = `推奨目標スコア: ${data.target_score}`;
-            displayResources(data);
+            showTargetResult(data);
         } catch(e) {
-            msg.className = 'msg error'; msg.innerText = 'エラーが発生しました';
+            alert("APIエラー: サーバーが起動しているか確認してください");
         }
     }
+    
+    // Tab 1: 素材計算 (APIの仕様上、同じエンドポイントで再計算させるのが確実)
+    async function calcResources() {
+        const score = document.getElementById('t1_score').value;
+        // 逆算用のAPIがないため、calc_targetのロジックではなく
+        // 本来は cal_min_chuna を呼ぶ必要がありますが、
+        // 簡易的に calc_target と同じレスポンス形式を使うため、
+        // 擬似的に「十分大きなコスト上限」を与えて、target_scoreを指定するAPIがあればベストです。
+        // ★今回のバックエンド仕様では「目標スコアを指定してリソースを計算する」専用エンドポイントがないため、
+        // クライアント側で「目標スコア」を更新し、それに基づいたリソース計算は
+        // calc_target のレスポンスを利用するのが基本フローとなります。
+        // ここでは便宜上、calcTarget関数で代用します（ユーザー体験としては逆算が望ましいですが）。
+        alert("現在のAPI仕様では、チュナ上限からの計算のみサポートされています。左側の機能をご利用ください。");
+    }
 
-    function displayResources(data) {
-        document.getElementById('t1_resources').style.display = 'block';
+    function showTargetResult(data) {
+        const area = document.getElementById('t1_result_area');
+        area.style.display = 'block';
+        document.getElementById('t1_msg').innerText = `推奨目標スコア: ${data.target_score}`;
         document.getElementById('res_tuner').innerText = Math.round(data.ave_chuna).toLocaleString();
         document.getElementById('res_record').innerText = Math.round(data.res_record).toLocaleString();
         document.getElementById('res_body').innerText = (data.res_body > 10000) ? '∞' : Math.round(data.res_body);
     }
 
+    // Tab 2: 判定
     async function judgeContinue() {
         const times = document.getElementById('t2_times').value;
-        const sub = [];
+        let sub = [];
         for(let i=0; i<7; i++) {
             const el = document.getElementById(`t2_sub_${i}`);
             sub.push(el ? parseFloat(el.value) : 0);
@@ -335,144 +418,165 @@
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    target_score: currentState.target_score,
+                    target_score: state.target_score,
                     current_times: parseInt(times),
                     substatus: sub,
-                    ave_chuna: currentState.ave_chuna,
-                    coe: currentState.preset.coe
+                    ave_chuna: state.ave_chuna,
+                    coe: state.preset.coe
                 })
             });
             const data = await res.json();
-            const resDiv = document.getElementById('t2_result');
-            resDiv.style.display = 'block';
-            resDiv.innerText = data.judgment;
             
-            if (data.judgment.includes("推奨")) resDiv.className = 'msg success';
-            else if (data.judgment.includes("可能")) resDiv.className = 'msg warning';
-            else resDiv.className = 'msg error';
+            const msgEl = document.getElementById('t2_result_msg');
+            const detEl = document.getElementById('t2_detail');
+            msgEl.style.display = 'block';
+            msgEl.innerText = data.judgment;
+            
+            msgEl.className = 'msg';
+            if(data.judgment === "強化推奨") msgEl.classList.add('success');
+            else if(data.judgment === "続行可能") msgEl.classList.add('warning');
+            else msgEl.classList.add('error');
 
             if (data.expected_cost < 1000000) {
-                document.getElementById('t2_detail').innerText = `ゴールまでの期待コスト: ${Math.round(data.expected_cost)} チュナ`;
+                const diff = state.ave_chuna - data.expected_cost;
+                let comment = "";
+                if(diff > 0) comment = `(新品より ${diff.toFixed(1)} チュナお得)`;
+                else comment = `(新品より ${Math.abs(diff).toFixed(1)} チュナ損)`;
+                
+                detEl.innerHTML = `ゴールまでの期待コスト: <b>${Math.round(data.expected_cost)}</b> チュナ<br>${comment}`;
+            } else {
+                detEl.innerText = "";
             }
-        } catch(e) { alert("エラー"); }
+
+        } catch(e) { alert("APIエラー"); }
     }
 
+    // Tab 3: 一覧
     async function calcLines() {
         const times = document.getElementById('t3_times').value;
-        document.getElementById('t3_loading').style.display = 'block';
-        document.getElementById('t3_table').innerHTML = '';
+        const loader = document.getElementById('t3_loading');
+        loader.style.display = 'block';
+        document.getElementById('t3_table').innerHTML = "";
 
         try {
             const res = await fetch(`${API_BASE}/api/lines`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({
-                    target_score: currentState.target_score,
+                    target_score: state.target_score,
                     search_times: parseInt(times),
-                    ave_chuna: currentState.ave_chuna,
-                    coe: currentState.preset.coe
+                    ave_chuna: state.ave_chuna,
+                    coe: state.preset.coe
                 })
             });
             const data = await res.json();
-            document.getElementById('t3_loading').style.display = 'none';
-            renderTable('t3_table', data.results, getLabels());
-        } catch(e) { alert("エラー"); document.getElementById('t3_loading').style.display = 'none'; }
+            loader.style.display = 'none';
+            renderLineTable(data.results);
+        } catch(e) {
+            loader.style.display = 'none';
+            alert("APIエラー / タイムアウト");
+        }
     }
 
-    function renderTable(tableId, rows, labels) {
-        const table = document.getElementById(tableId);
-        const coe = currentState.preset.coe;
+    function renderLineTable(rows) {
+        const table = document.getElementById('t3_table');
+        const labels = getLabels();
+        const coe = state.preset.coe;
         
-        // Header
-        let thead = '<tr>';
-        labels.forEach((lbl, i) => { if(coe[i]>0) thead += `<th>${lbl}</th>`; });
-        thead += '<th>スコア</th><th>チュナ</th></tr>';
+        let head = "<tr>";
+        labels.forEach((l, i) => { if(coe[i]>0) head += `<th>${l}</th>`; });
+        head += "<th>スコア</th><th>チュナ</th></tr>";
         
-        let tbody = '';
-        // Sort by score
+        // スコア昇順
         rows.sort((a,b) => a.score - b.score);
-        
+
+        let body = "";
         rows.forEach(r => {
-            let tr = '<tr>';
+            let tr = "<tr>";
             r.substatus.forEach((val, i) => {
-                if(coe[i]>0) tr += `<td class="${val==0?'zero-val':''}">${val.toFixed(1)}</td>`;
+                if(coe[i]>0) tr += `<td class="${val===0?'zero-val':''}">${val.toFixed(1)}</td>`;
             });
             tr += `<td>${r.score.toFixed(1)}</td><td>${Math.round(r.chuna)}</td></tr>`;
-            tbody += tr;
+            body += tr;
         });
-        table.innerHTML = thead + tbody;
+        table.innerHTML = `<thead>${head}</thead><tbody>${body}</tbody>`;
     }
 
-    // 5連集計（クライアント側のみで完結可能）
-    function calcEcho5() {
-        const coe = currentState.preset.coe;
-        const labels = getLabels();
-        const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
-        
-        // データ収集 [echoIdx][statIdx]
-        let data = [];
-        let totalStats = Array(7).fill(0);
-        let totalScoreIncl = 0;
-        let totalScoreExcl = 0;
-
-        for(let e=0; e<5; e++) {
-            let rowScore = 0;
-            let rowVals = [];
-            for(let i=0; i<7; i++) {
-                let val = 0;
-                if(coe[i]>0) {
-                    const el = document.getElementById(`t5_${e}_sub_${i}`);
-                    val = el ? parseFloat(el.value) : 0;
-                }
-                rowVals.push(val);
-                totalStats[i] += val;
-                rowScore += val * coe[i];
-            }
-            totalScoreIncl += rowScore;
-            // 共鳴効率(idx 5)抜き
-            totalScoreExcl += (rowScore - rowVals[5]*coe[5]);
-        }
-
-        // テーブル生成 (縦横変換)
-        let html = '<tr><th>項目</th>';
-        echoes.forEach(e => html += `<th>${e}</th>`);
-        html += '<th>合計</th></tr>';
-
-        labels.forEach((lbl, i) => {
-            if(coe[i] > 0) {
-                html += `<tr><td>${lbl}</td>`;
-                for(let e=0; e<5; e++) {
-                    const val = document.getElementById(`t5_${e}_sub_${i}`).value;
-                    html += `<td class="${val==0?'zero-val':''}">${val}</td>`;
-                }
-                html += `<td>${totalStats[i].toFixed(1)}</td></tr>`;
-            }
-        });
-
-        html += `<tr style="background:#f0f0f0; font-weight:bold;"><td>スコア(込)</td><td colspan="5" style="text-align:center;"></td><td>${totalScoreIncl.toFixed(1)}</td></tr>`;
-        html += `<tr style="background:#f0f0f0; font-weight:bold;"><td>スコア(抜)</td><td colspan="5" style="text-align:center;"></td><td>${totalScoreExcl.toFixed(1)}</td></tr>`;
-
-        document.getElementById('t5_table').innerHTML = html;
-    }
-
+    // Tab 4: CSV Download
     function downloadCSV() {
-        const coe = currentState.preset.coe;
+        const coe = state.preset.coe;
         const labels = getLabels();
-        let csv = "サブステ,値,スコア寄与\n";
+        let csv = "サブステータス,値,スコア寄与\n";
+        
         for(let i=0; i<7; i++) {
             if(coe[i]>0) {
-                const val = parseFloat(document.getElementById(`t4_sub_${i}`).value);
+                const el = document.getElementById(`t4_sub_${i}`);
+                const val = el ? parseFloat(el.value) : 0;
                 if(val > 0) {
                     csv += `${labels[i]},${val},${(val*coe[i]).toFixed(2)}\n`;
                 }
             }
         }
+        
         const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], {type: "text/csv"});
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = "score.csv";
-        a.click();
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = "score_result.csv";
+        link.click();
     }
+
+    // Tab 5: 5連集計 (ローカル計算)
+    function calcEcho5() {
+        const labels = getLabels();
+        const coe = state.preset.coe;
+        const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
+        
+        let totalStats = Array(7).fill(0);
+        let totalScoreIncER = 0;
+        let totalScoreExcER = 0;
+        
+        // データ収集
+        for(let e=0; e<5; e++) {
+            let rowScore = 0;
+            let erVal = 0;
+            
+            for(let i=0; i<7; i++) {
+                if(coe[i]>0) {
+                    const el = document.getElementById(`t5_${e}_${i}`);
+                    const val = el ? parseFloat(el.value) : 0;
+                    totalStats[i] += val;
+                    rowScore += val * coe[i];
+                    if(i === 5) erVal = val; // 共鳴効率(index 5)
+                }
+            }
+            totalScoreIncER += rowScore;
+            totalScoreExcER += (rowScore - (erVal * coe[5]));
+        }
+
+        // テーブル描画
+        let html = `<thead><tr><th>項目</th>`;
+        echoes.forEach(e => html += `<th>${e}</th>`);
+        html += `<th>合計</th></tr></thead><tbody>`;
+
+        labels.forEach((lbl, i) => {
+            if(coe[i]>0) {
+                html += `<tr><td>${lbl}</td>`;
+                for(let e=0; e<5; e++) {
+                    const val = document.getElementById(`t5_${e}_${i}`).value;
+                    html += `<td class="${val==0?'zero-val':''}">${val}</td>`;
+                }
+                html += `<td><b>${totalStats[i].toFixed(1)}</b></td></tr>`;
+            }
+        });
+        
+        // スコア行
+        html += `<tr style="background:#f0f0f0;"><td><b>スコア (込)</b></td><td colspan="5"></td><td><b>${totalScoreIncER.toFixed(1)}</b></td></tr>`;
+        html += `<tr style="background:#f0f0f0;"><td><b>スコア (抜)</b></td><td colspan="5" style="font-size:0.8em; text-align:center;">(共鳴効率を除く)</td><td><b>${totalScoreExcER.toFixed(1)}</b></td></tr>`;
+        
+        html += `</tbody>`;
+        document.getElementById('t5_table').innerHTML = html;
+    }
+
 </script>
 
 </body>
