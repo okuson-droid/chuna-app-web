@@ -20,10 +20,15 @@
         .card { background: var(--card-bg); padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px; }
         .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
         .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
+        /* 係数設定用のグリッド（7列） */
+        .grid-7 { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
 
         label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 0.9em; }
         input[type="number"], select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
         input[type="range"] { width: 100%; }
+        /* 係数入力用のスタイル */
+        .coe-input { font-size: 0.9em; text-align: center; }
+        
         button { background-color: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 10px; transition: 0.2s; }
         button:hover { opacity: 0.85; }
         button:disabled { background-color: #ccc; cursor: not-allowed; }
@@ -54,17 +59,15 @@
     <h1>🔊 鳴潮 音骸厳選ツール (Client)</h1>
 
     <div class="card">
-        <h3>⚙️ キャラクター・プリセット設定</h3>
-        <div class="grid-2">
-            <div>
-                <label>キャラクター選択</label>
-                <select id="charSelect" onchange="updatePreset()"></select>
-            </div>
-            <div>
-                <label>現在の有効ステータス</label>
-                <div id="activeStatsDisplay" style="font-size: 0.85em; color: #555; line-height: 1.4;"></div>
-            </div>
+        <h3>⚙️ キャラクター・係数設定</h3>
+        <div style="margin-bottom: 15px;">
+            <label>キャラクター選択</label>
+            <select id="charSelect" onchange="updatePreset()"></select>
         </div>
+        
+        <p style="font-size:0.85em; color:#666; margin-bottom:5px;">各サブステータスのスコア係数（重要度）を編集できます。</p>
+        <div class="grid-7" id="coe_inputs">
+            </div>
     </div>
 
     <div class="tabs">
@@ -97,7 +100,11 @@
                 <h3>📊 素材消費量（期待値）</h3>
                 <div class="grid-3" style="text-align: center;">
                     <div><h4>チュナ</h4><span id="res_tuner" style="font-size: 1.5em; font-weight: bold;">-</span></div>
-                    <div><h4>レコード (金)</h4><span id="res_record" style="font-size: 1.5em; font-weight: bold;">-</span></div>
+                    <div>
+                        <h4>レコード (金)</h4>
+                        <span id="res_record" style="font-size: 1.5em; font-weight: bold;">-</span>
+                        <div style="font-size:0.8em; color:#666;">(金レコード換算÷5000)</div>
+                    </div>
                     <div><h4>音骸素体</h4><span id="res_body" style="font-size: 1.5em; font-weight: bold;">-</span></div>
                 </div>
             </div>
@@ -182,7 +189,7 @@
     // 1. 設定 & 定数
     // ============================================
     
-    // ★RenderのURLを指定 (末尾の / は無し)
+    // ★ここを Hugging Face のURLに書き換えてください (末尾の / は無し)
     const API_BASE = "https://okuson-chuna-backend.hf.space";
 
     const SUBST_DATA = {
@@ -235,7 +242,8 @@
     let state = {
         target_score: 25,
         ave_chuna: 100.0,
-        preset: PRESETS["カスタム (手動設定)"]
+        preset: PRESETS["カスタム (手動設定)"],
+        coe_override: [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1] // ユーザー編集用の係数
     };
 
     // ============================================
@@ -267,16 +275,48 @@
         const name = document.getElementById('charSelect').value;
         state.preset = PRESETS[name];
         
-        const labels = getLabels();
-        const active = labels.filter((l, i) => state.preset.coe[i] > 0);
-        document.getElementById('activeStatsDisplay').innerText = active.join(" / ");
+        // 係数をコピー
+        state.coe_override = [...state.preset.coe];
         
-        renderAllSliders();
+        renderCoeInputs(); // 係数入力欄を描画
+        renderAllSliders(); // スライダー更新
     }
 
-    function getLabels() {
+    // 係数入力欄の生成
+    function renderCoeInputs() {
+        const container = document.getElementById('coe_inputs');
+        container.innerHTML = "";
+        
+        const labels = getLabels(true); // 固定ラベル名で取得
+        
+        labels.forEach((lbl, i) => {
+            const div = document.createElement('div');
+            
+            const label = document.createElement('label');
+            label.style.fontSize = "0.75em";
+            label.innerText = lbl;
+            
+            const input = document.createElement('input');
+            input.type = "number";
+            input.step = "0.1";
+            input.className = "coe-input";
+            input.value = state.coe_override[i];
+            input.onchange = (e) => {
+                state.coe_override[i] = parseFloat(e.target.value);
+                renderAllSliders(); // 有効ステータスの表示切替などのため再描画
+                recalcLocalScore();
+            };
+            
+            div.appendChild(label);
+            div.appendChild(input);
+            container.appendChild(div);
+        });
+    }
+
+    function getLabels(useStatic = false) {
         const p = state.preset;
-        return ["クリティカル", "クリダメ", "攻撃力％", p.d1, p.d2, "共鳴効率", "攻撃実数"];
+        if(useStatic) return ["クリ率", "クリダメ", "攻撃%", p.d1 || "ダメ1", p.d2 || "ダメ2", "共鳴効率", "攻撃実数"];
+        return ["クリティカル", "クリダメ", "攻撃力％", p.d1 || "ダメアップ1", p.d2 || "ダメアップ2", "共鳴効率", "攻撃実数"];
     }
 
     function getValuesList(index) {
@@ -298,7 +338,7 @@
 
     function renderAllSliders() {
         const labels = getLabels();
-        const coe = state.preset.coe;
+        const coe = state.coe_override; // 編集中の係数を使用
 
         let t2_html = "", t4_html = "";
         labels.forEach((lbl, i) => {
@@ -324,7 +364,7 @@
     }
 
     function recalcLocalScore() {
-        const coe = state.preset.coe;
+        const coe = state.coe_override;
         let s2 = 0, s4 = 0;
         for(let i=0; i<7; i++) {
             if(coe[i]>0) {
@@ -343,7 +383,11 @@
         area.style.display = 'block';
         document.getElementById('t1_msg').innerText = `目標スコア: ${data.target_score}`;
         document.getElementById('res_tuner').innerText = Math.round(data.ave_chuna).toLocaleString();
-        document.getElementById('res_record').innerText = Math.round(data.res_record).toLocaleString();
+        
+        // ★修正: レコード数を5000で割って整数表示
+        const recNum = Math.round(data.res_record / 5000);
+        document.getElementById('res_record').innerText = recNum.toLocaleString();
+        
         document.getElementById('res_body').innerText = (data.res_body > 10000) ? '∞' : Math.round(data.res_body);
     }
 
@@ -361,7 +405,8 @@
             const res = await fetch(`${API_BASE}/api/calc_target`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ chuna_limit: parseFloat(limit), coe: state.preset.coe })
+                // 編集後の係数を送信
+                body: JSON.stringify({ chuna_limit: parseFloat(limit), coe: state.coe_override })
             });
             if(!res.ok) throw new Error();
             const data = await res.json();
@@ -374,7 +419,7 @@
         finally { btn.disabled = false; btn.innerText = "目標スコアを計算"; }
     }
 
-    // Tab 1: 素材計算 (実装済み)
+    // Tab 1: 素材計算
     async function calcResources() {
         const score = document.getElementById('t1_score').value;
         const btn = document.querySelector('button[onclick="calcResources()"]');
@@ -384,7 +429,7 @@
             const res = await fetch(`${API_BASE}/api/calc_resources`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ target_score: parseInt(score), coe: state.preset.coe })
+                body: JSON.stringify({ target_score: parseInt(score), coe: state.coe_override })
             });
             if(!res.ok) throw new Error();
             const data = await res.json();
@@ -413,7 +458,7 @@
                     current_times: parseInt(times),
                     substatus: sub,
                     ave_chuna: state.ave_chuna,
-                    coe: state.preset.coe
+                    coe: state.coe_override
                 })
             });
             const data = await res.json();
@@ -446,7 +491,7 @@
                     target_score: parseInt(state.target_score),
                     search_times: parseInt(times),
                     ave_chuna: state.ave_chuna,
-                    coe: state.preset.coe
+                    coe: state.coe_override
                 })
             });
             const data = await res.json();
@@ -458,7 +503,7 @@
     function renderLineTable(rows) {
         const table = document.getElementById('t3_table');
         const labels = getLabels();
-        const coe = state.preset.coe;
+        const coe = state.coe_override;
         
         if (!rows || rows.length === 0) { table.innerHTML = "<tr><td>条件を満たす組み合わせなし</td></tr>"; return; }
 
@@ -480,7 +525,7 @@
     }
 
     function downloadCSV() {
-        const coe = state.preset.coe;
+        const coe = state.coe_override;
         const labels = getLabels();
         let csv = "サブステ,値,スコア寄与\n";
         for(let i=0; i<7; i++) {
@@ -497,17 +542,16 @@
         link.click();
     }
 
-    // Tab 5: 5連集計 + 合計行
+    // Tab 5: 5連集計
     function calcEcho5() {
         const labels = getLabels();
-        const coe = state.preset.coe;
+        const coe = state.coe_override;
         const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
         
         let totalStats = Array(7).fill(0);
         let totalScoreIncER = 0;
         let totalScoreExcER = 0;
         
-        // ★各音骸のスコアを保存する配列
         let echoScores = Array(5).fill(0);
 
         for(let e=0; e<5; e++) {
@@ -522,7 +566,7 @@
                     if(i === 5) erVal = val;
                 }
             }
-            echoScores[e] = rowScore; // 音骸ごとのスコア保存
+            echoScores[e] = rowScore;
             totalScoreIncER += rowScore;
             totalScoreExcER += (rowScore - (erVal * coe[5]));
         }
@@ -542,14 +586,12 @@
             }
         });
         
-        // ★修正: 各音骸のスコア合計行を追加
         html += `<tr class="sum-row"><td>各音骸スコア</td>`;
         echoes.forEach((_, e) => {
             html += `<td>${echoScores[e].toFixed(1)}</td>`;
         });
         html += `<td>-</td></tr>`;
 
-        // 全体合計行
         html += `<tr style="background:#f0f0f0;"><td><b>全体スコア (込)</b></td><td colspan="5" style="text-align:center;"></td><td><b>${totalScoreIncER.toFixed(1)}</b></td></tr>`;
         html += `<tr style="background:#f0f0f0;"><td><b>全体スコア (抜)</b></td><td colspan="5" style="font-size:0.8em; text-align:center;">(共鳴効率を除く)</td><td><b>${totalScoreExcER.toFixed(1)}</b></td></tr>`;
         
