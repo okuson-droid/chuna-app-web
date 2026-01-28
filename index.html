@@ -69,14 +69,40 @@
     </div>
 
     <div class="tabs">
-        <div class="tab active" onclick="switchTab(1)">① 目標設定</div>
-        <div class="tab" onclick="switchTab(2)">② 続行判定</div>
-        <div class="tab" onclick="switchTab(3)">③ 続行可能ライン</div>
-        <div class="tab" onclick="switchTab(4)">④ 音骸スコア計算</div>
-        <div class="tab" onclick="switchTab(5)">⑤ キャラの音骸管理</div>
+        <div class="tab active" onclick="switchTab(4, this)">① 音骸スコア計算</div>
+        <div class="tab" onclick="switchTab(5, this)">② キャラの音骸管理</div>
+        <div class="tab" onclick="switchTab(1, this)">③ 目標設定</div>
+        <div class="tab" onclick="switchTab(2, this)">④ 続行判定</div>
+        <div class="tab" onclick="switchTab(3, this)">⑤ 続行可能ライン</div>
     </div>
 
-    <div id="tab1" class="tab-content active">
+    <div id="tab4" class="tab-content active">
+        <div class="card">
+            <h3>音骸スコア計算（単体）</h3>
+            <div id="t4_sliders" class="grid-3"></div>
+            <hr>
+            <div style="text-align:center;">
+                <h2>合計スコア: <span id="t4_score">0.00</span></h2>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab5" class="tab-content">
+        <div class="card">
+            <h3>キャラの音骸管理</h3>
+            <div id="t5_container"></div>
+            <button onclick="calcEcho5()">集計する</button>
+        </div>
+        <div class="card">
+            <h3>集計結果</h3>
+            <button onclick="downloadEcho5CSV()" style="margin-bottom:15px; background:#28a745;">結果をCSVでダウンロード</button>
+            <div style="overflow-x:auto;">
+                <table id="t5_table"></table>
+            </div>
+        </div>
+    </div>
+
+    <div id="tab1" class="tab-content">
         <div class="grid-2">
             <div class="card">
                 <h3>目標スコア算出</h3>
@@ -162,32 +188,6 @@
         </div>
     </div>
 
-    <div id="tab4" class="tab-content">
-        <div class="card">
-            <h3>音骸スコア計算（単体）</h3>
-            <div id="t4_sliders" class="grid-3"></div>
-            <hr>
-            <div style="text-align:center;">
-                <h2>合計スコア: <span id="t4_score">0.00</span></h2>
-            </div>
-        </div>
-    </div>
-
-    <div id="tab5" class="tab-content">
-        <div class="card">
-            <h3>キャラの音骸管理</h3>
-            <div id="t5_container"></div>
-            <button onclick="calcEcho5()">集計する</button>
-        </div>
-        <div class="card">
-            <h3>集計結果</h3>
-            <button onclick="downloadEcho5CSV()" style="margin-bottom:15px; background:#28a745;">結果をCSVでダウンロード</button>
-            <div style="overflow-x:auto;">
-                <table id="t5_table"></table>
-            </div>
-        </div>
-    </div>
-
 </div>
 
 <script>
@@ -205,12 +205,12 @@
         "dam": [6.4, 7.1, 7.9, 8.6, 9.4, 10.1, 10.9, 11.6],
         "er": [6.8, 7.6, 8.4, 9.2, 10.0, 10.8, 11.6, 12.4],
         "atk_n": [30, 40, 50, 60],
-        // ★HP実数の定義追加
         "hp_n": [320, 360, 390, 430, 470, 510, 540, 580]
     };
 
     const PRESETS = {
         "カスタム (手動設定)": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "ダメアップ1", "d2": "ダメアップ2"},
+        "カルテジア": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー", "is_hp": true},
         "リンネー": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
         "千咲": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
         "仇遠": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
@@ -220,7 +220,6 @@
         "フローヴァ": {"coe": [2.0, 1.0, 1.0, 0.5, 0.0, 0.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
         "ルパ": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
         "シャコンヌ": {"coe": [2.0, 1.0, 1.0, 0.3, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
-        "カルテジア": {"coe": [2.0, 1.0, 0.8, 0.3, 0.3, 1.0, 0.05], "d1": "通常ダメ", "d2": "解放ダメ", "is_hp": true},
         "ザンニー": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
         "カンタレラ": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
         "ブラント": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
@@ -264,10 +263,10 @@
         updatePreset();
     };
 
-    function switchTab(n) {
+    function switchTab(n, btnElement) {
         document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+        if(btnElement) btnElement.classList.add('active');
         document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-        document.querySelectorAll('.tab')[n-1].classList.add('active');
         document.getElementById(`tab${n}`).classList.add('active');
     }
 
@@ -285,7 +284,7 @@
         const name = document.getElementById('charSelect').value;
         state.preset = PRESETS[name];
         state.coe_override = [...state.preset.coe];
-        state.is_hp = !!state.preset.is_hp; // HPキャラフラグ
+        state.is_hp = !!state.preset.is_hp;
         
         renderCoeInputs();
         renderAllSliders();
@@ -364,12 +363,6 @@
         `;
     }
 
-    function createSelectHTML(id, label, values) {
-        let opts = `<option value="0">未取得</option>`;
-        values.forEach(v => { opts += `<option value="${v}">${v}</option>`; });
-        return `<div class="stat-group"><label style="font-size:0.8em">${label}</label><select id="${id}" onchange="recalcLocalScore()">${opts}</select></div>`;
-    }
-
     function renderAllSliders() {
         const labels = getLabels();
         const coe = state.coe_override;
@@ -390,7 +383,7 @@
         echoes.forEach((eName, eIdx) => {
             let content = "";
             labels.forEach((lbl, i) => {
-                if (coe[i] > 0) content += createSelectHTML(`t5_${eIdx}_${i}`, lbl, getValuesList(i));
+                if (coe[i] > 0) content += createSliderHTML(`t5_${eIdx}_${i}`, lbl, getValuesList(i));
             });
             t5_html += `<details><summary>${eName}</summary><div class="details-content grid-3">${content}</div></details>`;
         });
@@ -597,7 +590,8 @@
             for(let i=0; i<7; i++) {
                 if(coe[i]>0) {
                     const el = document.getElementById(`t5_${e}_${i}`);
-                    const val = el ? parseFloat(el.value) : 0;
+                    // ★修正: スライダーの値から実数を取得
+                    const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     totalStats[i] += val;
                     rowScore += val * coe[i];
                     if(i === 5) erVal = val;
@@ -613,7 +607,10 @@
             if(coe[i]>0) {
                 let row = [lbl];
                 for(let e=0; e<5; e++) {
-                    row.push(document.getElementById(`t5_${e}_${i}`).value);
+                    // ★修正: CSV出力用もスライダー値から実数を取得
+                    const el = document.getElementById(`t5_${e}_${i}`);
+                    const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
+                    row.push(val);
                 }
                 row.push(totalStats[i].toFixed(1));
                 csv += row.join(",") + "\n";
@@ -642,7 +639,6 @@
         let totalScoreInc = 0;
         let totalScoreExc = 0;
         
-        // ★修正: 2種類のスコアを保存
         let scoreInc = Array(5).fill(0); // 込み
         let scoreExc = Array(5).fill(0); // 抜き
 
@@ -652,7 +648,8 @@
             for(let i=0; i<7; i++) {
                 if(coe[i]>0) {
                     const el = document.getElementById(`t5_${e}_${i}`);
-                    const val = el ? parseFloat(el.value) : 0;
+                    // ★修正: スライダーの値(0-8)から実際の値を取得
+                    const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     totalStats[i] += val;
                     rowScore += val * coe[i];
                     if(i === 5) erVal = val;
@@ -673,14 +670,15 @@
             if(coe[i]>0) {
                 html += `<tr><td>${lbl}</td>`;
                 for(let e=0; e<5; e++) {
-                    const val = document.getElementById(`t5_${e}_${i}`).value;
+                    const el = document.getElementById(`t5_${e}_${i}`);
+                    // ★修正: 表の表示も実際の値に
+                    const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     html += `<td class="${val==0?'zero-val':''}">${val}</td>`;
                 }
                 html += `<td><b>${totalStats[i].toFixed(1)}</b></td></tr>`;
             }
         });
         
-        // ★修正: 個別スコアを2行表示
         html += `<tr class="sum-row"><td>個別(込)</td>`;
         echoes.forEach((_, e) => html += `<td>${scoreInc[e].toFixed(1)}</td>`);
         html += `<td>-</td></tr>`;
