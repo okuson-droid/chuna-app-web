@@ -120,7 +120,7 @@
             <div class="card">
                 <h3>目標スコアを直接入力</h3>
                 <p style="font-size:0.9em; color:#666;">入力された目標スコアを達成するために必要なチュナ、レコード、音骸素体の消費量を計算します。</p>
-                <label>目標スコア: <input type="number" id="t1_score" value="25"></label>
+                <label>目標スコア: <input type="number" id="t1_score" value="40"></label>
                 <button onclick="calcResources()">素材消費量を計算</button>
             </div>
         </div>
@@ -529,7 +529,7 @@
 
             if (data.expected_cost < 1000000) {
                 const diff = state.ave_chuna - data.expected_cost;
-                let comment = diff >= 0 ? `(新品より ${diff.toFixed(1)} チュナお得)` : `(新品より ${Math.abs(diff).toFixed(1)} チュナ損)`;
+                let comment = diff >= 0 ? `(レベル0からの強化より ${diff.toFixed(1)} チュナお得)` : `(レベル0からの強化より ${Math.abs(diff).toFixed(1)} チュナ損)`;
                 detEl.innerHTML = `ゴールまでの期待コスト: <b>${Math.round(data.expected_cost)}</b> チュナ<br>${comment}`;
             } else { detEl.innerText = ""; }
         } catch(e) { alert("APIエラー"); }
