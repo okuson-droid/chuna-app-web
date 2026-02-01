@@ -70,10 +70,10 @@
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab(4, this)">① 音骸スコア計算</div>
-        <div class="tab" onclick="switchTab(5, this)">② キャラの音骸管理</div>
+        <div class="tab" onclick="switchTab(5, this)">② キャラの音骸管理表</div>
         <div class="tab" onclick="switchTab(1, this)">③ 目標設定</div>
         <div class="tab" onclick="switchTab(2, this)">④ 続行判定</div>
-        <div class="tab" onclick="switchTab(3, this)">⑤ 続行可能ライン</div>
+        <div class="tab" onclick="switchTab(3, this)">⑤ 続行可能ライン一覧</div>
     </div>
 
     <div id="tab4" class="tab-content active">
@@ -89,7 +89,14 @@
 
     <div id="tab5" class="tab-content">
         <div class="card">
-            <h3>キャラの音骸管理</h3>
+            <h3>キャラの音骸管理表</h3>
+            <div style="margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 4px;">
+                <label>コスト構成選択</label>
+                <select id="costPatternSelect" onchange="updateCostPattern()">
+                    <option value="43311">4-3-3-1-1 (主流)</option>
+                    <option value="44111">4-4-1-1-1 (カルテジア等)</option>
+                </select>
+            </div>
             <div id="t5_container"></div>
             <button onclick="calcEcho5()">集計する</button>
         </div>
@@ -105,15 +112,15 @@
     <div id="tab1" class="tab-content">
         <div class="grid-2">
             <div class="card">
-                <h3>目標スコア算出</h3>
-                <p style="font-size:0.9em; color:#666;">使用可能なチュナの量から目標スコアを逆算し、素材の消費量と合わせて表示します。</p>
+                <h3>目標スコア計算</h3>
+                <p style="font-size:0.9em; color:#666;">使用可能なチュナの量から現実的な目標スコアを計算し、素材の消費量と合わせて表示します。</p>
                 <label>使用可能チュナ: <input type="number" id="t1_limit" value="500" step="100"></label>
                 <button onclick="calcTarget()">目標スコアを計算</button>
             </div>
             <div class="card">
                 <h3>目標スコアを直接入力</h3>
-                <p style="font-size:0.9em; color:#666;">目標スコアからチュナ、レコード、音骸素体の消費量を計算します。</p>
-                <label>目標スコア: <input type="number" id="t1_score" value="40"></label>
+                <p style="font-size:0.9em; color:#666;">入力された目標スコアを達成するために必要なチュナ、レコード、音骸素体の消費量を計算します。</p>
+                <label>目標スコア: <input type="number" id="t1_score" value="25"></label>
                 <button onclick="calcResources()">素材消費量を計算</button>
             </div>
         </div>
@@ -210,6 +217,7 @@
 
     const PRESETS = {
         "カスタム (手動設定)": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "ダメアップ1", "d2": "ダメアップ2"},
+        "カルテジア": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー", "is_hp": true},
         "リンネー": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
         "千咲": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
         "仇遠": {"coe": [2.0, 1.0, 1.0, 0.6, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
@@ -218,7 +226,6 @@
         "オーガスタ": {"coe": [2.0, 1.0, 1.0, 0.8, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
         "フローヴァ": {"coe": [2.0, 1.0, 1.0, 0.5, 0.0, 0.0, 0.1], "d1": "スキルダメ", "d2": "ーーーー"},
         "ルパ": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
-         "カルテジア": {"coe": [2.0, 1.0, 0.8, 0.3, 0.3, 1.0, 0.005], "d1": "通常ダメ", "d2": "解放ダメ", "is_hp": true},
         "シャコンヌ": {"coe": [2.0, 1.0, 1.0, 0.3, 0.0, 1.0, 0.1], "d1": "解放ダメ", "d2": "ーーーー"},
         "ザンニー": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "重撃ダメ", "d2": "ーーーー"},
         "カンタレラ": {"coe": [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1], "d1": "通常ダメ", "d2": "ーーーー"},
@@ -247,12 +254,18 @@
         "散華": {"coe": [2.0, 1.0, 1.0, 0.3, 0.3, 1.0, 0.1], "d1": "解放ダメ", "d2": "スキルダメ"}
     };
 
+    const COST_PATTERNS = {
+        "43311": ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"],
+        "44111": ["コスト4(A)", "コスト4(B)", "コスト1(A)", "コスト1(B)", "コスト1(C)"]
+    };
+
     let state = {
         target_score: 25,
         ave_chuna: 100.0,
         preset: PRESETS["カスタム (手動設定)"],
         coe_override: [2.0, 1.0, 1.0, 0.7, 0.0, 1.0, 0.1],
-        is_hp: false // HP参照キャラかどうか
+        is_hp: false,
+        cost_pattern: "43311"
     };
 
     // ============================================
@@ -288,6 +301,12 @@
         
         renderCoeInputs();
         renderAllSliders();
+    }
+
+    function updateCostPattern() {
+        state.cost_pattern = document.getElementById('costPatternSelect').value;
+        renderAllSliders();
+        document.getElementById('t5_table').innerHTML = ""; // テーブルをクリア
     }
 
     function renderCoeInputs() {
@@ -329,19 +348,16 @@
     }
 
     function getValuesList(index) {
-        // インデックス 0:CR, 1:CD, 2:ATK%, 3:D1, 4:D2, 5:ER, 6:Flat
-        if (index === 2) return state.is_hp ? SUBST_DATA.atk_p : SUBST_DATA.atk_p; // HP%も数値は同じ
-        if (index === 6) return state.is_hp ? SUBST_DATA.hp_n : SUBST_DATA.atk_n; // 実数は違う
-        
+        if (index === 2) return state.is_hp ? SUBST_DATA.atk_p : SUBST_DATA.atk_p; 
+        if (index === 6) return state.is_hp ? SUBST_DATA.hp_n : SUBST_DATA.atk_n; 
         const map = [
             SUBST_DATA.cr, SUBST_DATA.cd, SUBST_DATA.atk_p, 
             SUBST_DATA.dam, SUBST_DATA.dam, SUBST_DATA.er, 
-            SUBST_DATA.atk_n // placeholder
+            SUBST_DATA.atk_n 
         ];
         return map[index];
     }
 
-    // スライダー生成
     function createSliderHTML(id, label, values) {
         const onInput = `
             const v = this.value;
@@ -367,6 +383,7 @@
         const labels = getLabels();
         const coe = state.coe_override;
 
+        // Tab 2 & 4 (Single Echo)
         let t2_html = "", t4_html = "";
         labels.forEach((lbl, i) => {
             if (coe[i] > 0) {
@@ -378,7 +395,8 @@
         document.getElementById('t2_sliders').innerHTML = `<div class="grid-3">${t2_html}</div>`;
         document.getElementById('t4_sliders').innerHTML = t4_html;
 
-        const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
+        // Tab 5 (Character Management)
+        const echoes = COST_PATTERNS[state.cost_pattern];
         let t5_html = "";
         echoes.forEach((eName, eIdx) => {
             let content = "";
@@ -552,7 +570,6 @@
         labels.forEach((l, i) => { if(coe[i]>0) head += `<th>${l}</th>`; });
         head += "<th>スコア</th><th>チュナ</th></tr>";
         
-        // ★修正: 項目数(昇順) -> スコア(降順)
         rows.sort((a,b) => {
             const countA = a.substatus.filter(v => v > 0).length;
             const countB = b.substatus.filter(v => v > 0).length;
@@ -575,7 +592,7 @@
     function downloadEcho5CSV() {
         const labels = getLabels();
         const coe = state.coe_override;
-        const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
+        const echoes = COST_PATTERNS[state.cost_pattern];
         let csv = "項目," + echoes.join(",") + ",合計\n";
 
         let totalStats = Array(7).fill(0);
@@ -590,7 +607,6 @@
             for(let i=0; i<7; i++) {
                 if(coe[i]>0) {
                     const el = document.getElementById(`t5_${e}_${i}`);
-                    // ★修正: スライダーの値から実数を取得
                     const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     totalStats[i] += val;
                     rowScore += val * coe[i];
@@ -607,7 +623,6 @@
             if(coe[i]>0) {
                 let row = [lbl];
                 for(let e=0; e<5; e++) {
-                    // ★修正: CSV出力用もスライダー値から実数を取得
                     const el = document.getElementById(`t5_${e}_${i}`);
                     const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     row.push(val);
@@ -629,18 +644,17 @@
         link.click();
     }
 
-    // Tab 5: 5連集計 + 合計行 (2種類)
     function calcEcho5() {
         const labels = getLabels();
         const coe = state.coe_override;
-        const echoes = ["コスト4", "コスト3(A)", "コスト3(B)", "コスト1(A)", "コスト1(B)"];
+        const echoes = COST_PATTERNS[state.cost_pattern];
         
         let totalStats = Array(7).fill(0);
         let totalScoreInc = 0;
         let totalScoreExc = 0;
         
-        let scoreInc = Array(5).fill(0); // 込み
-        let scoreExc = Array(5).fill(0); // 抜き
+        let scoreInc = Array(5).fill(0); 
+        let scoreExc = Array(5).fill(0); 
 
         for(let e=0; e<5; e++) {
             let rowScore = 0;
@@ -648,7 +662,6 @@
             for(let i=0; i<7; i++) {
                 if(coe[i]>0) {
                     const el = document.getElementById(`t5_${e}_${i}`);
-                    // ★修正: スライダーの値(0-8)から実際の値を取得
                     const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     totalStats[i] += val;
                     rowScore += val * coe[i];
@@ -671,7 +684,6 @@
                 html += `<tr><td>${lbl}</td>`;
                 for(let e=0; e<5; e++) {
                     const el = document.getElementById(`t5_${e}_${i}`);
-                    // ★修正: 表の表示も実際の値に
                     const val = getSliderValue(`t5_${e}_${i}`, parseInt(el ? el.value : 0));
                     html += `<td class="${val==0?'zero-val':''}">${val}</td>`;
                 }
