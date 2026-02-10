@@ -460,6 +460,14 @@
 
     async function calcTarget() {
         const limit = document.getElementById('t1_limit').value;
+        const charName = document.getElementById('charSelect').value; // キャラ名取得
+
+        // ★追加: Google Analyticsにデータを送信
+        gtag('event', 'calc_target_click', {
+            'chuna_limit': limit,
+            'character': charName
+        });
+
         const btn = document.querySelector('button[onclick="calcTarget()"]');
         const loading = document.getElementById('t1_loading');
         
@@ -486,6 +494,14 @@
 
     async function calcResources() {
         const score = document.getElementById('t1_score').value;
+        const charName = document.getElementById('charSelect').value;
+
+        // ★追加: Google Analyticsにデータを送信
+        gtag('event', 'calc_resource_click', {
+            'target_score': score,
+            'character': charName
+        });
+
         const btn = document.querySelector('button[onclick="calcResources()"]');
         const loading = document.getElementById('t1_loading');
 
@@ -510,6 +526,15 @@
 
     async function judgeContinue() {
         const times = document.getElementById('t2_times').value;
+        const charName = document.getElementById('charSelect').value;
+
+        // ★追加: Google Analyticsにデータを送信
+        gtag('event', 'judge_click', {
+            'current_times': times, // 現在の強化回数
+            'target_score': state.target_score,
+            'character': charName
+        });
+
         let sub = [];
         for(let i=0; i<7; i++) {
             const el = document.getElementById(`t2_sub_${i}`);
@@ -547,6 +572,15 @@
 
     async function calcLines() {
         const times = document.getElementById('t3_times').value;
+        const charName = document.getElementById('charSelect').value;
+
+        // ★追加: Google Analyticsにデータを送信
+        gtag('event', 'lines_click', {
+            'search_times': times,
+            'target_score': state.target_score,
+            'character': charName
+        });
+        
         const loader = document.getElementById('t3_loading');
         loader.style.display = 'block';
         document.getElementById('t3_table').innerHTML = "";
